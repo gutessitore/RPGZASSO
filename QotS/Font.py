@@ -5,6 +5,7 @@ https://www.youtube.com/playlist?list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
 
 Alterações:
 criação de um sistema de mana para ultilização dos ataques basicos, que evolui com os niveis.
+recuperacao de vida com a barra de espirito
 sistema de niveis de acordo com a quantidade de monstros mortos e seu tipo que evolui atributos do personagem principal
 mecanica do personagem principal que atira em direção ao mouse 
 monstros que evitam o personagem e atiram em sua direção
