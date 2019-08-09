@@ -5,7 +5,7 @@ https://www.youtube.com/playlist?list=PLsk-HSGFjnaGQq7ybM8Lgkh5EMxUWPm2i
 
 Alterações:
 criação de um sistema de mana para ultilização dos ataques basicos, que evolui com os niveis.
-recuperacao de vida com a barra de espirito
+recuperacao de vida com a barra de espiritosS4
 sistema de niveis de acordo com a quantidade de monstros mortos e seu tipo que evolui atributos do personagem principal
 mecanica do personagem principal que atira em direção ao mouse 
 monstros que evitam o personagem e atiram em sua direção
@@ -69,7 +69,7 @@ def draw_player_xp(surf, x, y, pct):
     outline_rect = pg.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
     fill_rect = pg.Rect(x, y, fill, BAR_HEIGHT)
     col = DARKGREEN
-    pg.draw.rect(surf, col, fill_rect)
+    pg.draw.Rect(surf, col, fill_rect)
     pg.draw.rect(surf, WHITE, outline_rect, 2)
 
 class Game:
@@ -128,6 +128,8 @@ class Game:
         self.tela_go = pg.image.load(path.join(img_folder, TELA_OVER)).convert_alpha()
         self.tela_fi = pg.image.load(path.join(img_folder, TELA_FINAL)).convert_alpha()
         self.tela_mt = pg.image.load(path.join(img_folder, MAD_TITAN)).convert_alpha()
+        self.dim = pg.Surface(self.screen.get_size()).convert_alpha()
+        self.dim.fill((0, 0, 0, 150))
         self.musica_inicial = pg.mixer.music.load(path.join(path.join(game_folder, 'music'), MUSICA_INICIAL))
 
     def new(self):
@@ -167,6 +169,7 @@ class Game:
 
         self.camera = Camera(self.map.width, self.map.height)
         self.ver = False
+        self.pause = False
 
     def run(self):
         # game loop
@@ -174,7 +177,8 @@ class Game:
         while self.playing:
             self.dt = self.clock.tick(FPS) / 1000
             self.events()
-            self.update()
+            if not self.pause:
+            	self.update()
             self.draw()
 
     def quit(self):
@@ -204,15 +208,15 @@ class Game:
 
         	#magik DMG
         for hit in hits_m:
-        	dano_p = ATK_DMG + random.randrange(-5, 5)
+        	dano_p = ATK_DMG * ((self.player.lvl / 10) + 1) + random.randrange(-5, 5)
         	hit.health -= dano_p
 
         for hit in hits_b:
-        	dano_p = 220 + random.randrange(1, 50)
+        	dano_p = 220 * ((self.player.lvl / 10) + 1) + random.randrange(1, 50)
         	hit.health -= dano_p
 
         for hit in hits_mm:
-        	dano_p = ATK_DMG + 40 + random.randrange(-5, 5)
+        	dano_p = (ATK_DMG + 40) * ((self.player.lvl / 10) + 1) + random.randrange(-5, 5)
         	hit.health -= dano_p
          	# mob DMG
         for hit in hits:
@@ -242,7 +246,7 @@ class Game:
         	self.quit()
 
     def draw(self):
-        #pg.display.set_caption("{:.2f}".format(self.clock.get_fps())) # tirar quando acabar
+        pg.display.set_caption("{:.2f}".format(self.clock.get_fps())) # tirar quando acabar
         self.screen.blit(self.map_img, self.camera.apply_rect(self.map_rect))
      
         for sprite in self.all_sprites:
@@ -252,6 +256,7 @@ class Game:
                 sprite.draw_health()
             if isinstance(sprite, Monstro_F):
                 sprite.draw_health()
+
             # para ver as hitboxes 
             self.screen.blit(sprite.image, self.camera.apply(sprite))
 
@@ -265,10 +270,15 @@ class Game:
 
         if self.player.lvl > 3:
         	draw_player_spirit(self.screen, 10, 100, self.player.spirit / SPIRIT)
-        	self.draw_text('Sp  {0}-{1}'.format(self.player.spirit, SPIRIT), self.title_font, 25, WHITE, 225, 95, align="nw")
+        	self.draw_text('Sp  {0}-{1}'.format(int(self.player.spirit), SPIRIT), self.title_font, 25, WHITE, 225, 95, align="nw")
 
         draw_player_xp(self.screen, 10, 10, self.player.xp / self.player.lvlxp)
         self.draw_text('Lvl {2} {0}-{1}'.format(self.player.xp,self.player.lvlxp, self.player.lvl), self.title_font, 25, WHITE, 525, 10, align="nw")
+
+        if self.pause:
+        	self.screen.blit(self.dim, (0, 0))
+        	self.draw_text("Pause", self.title_font, 200, WHITE, WIDTH/2, HEIGHT/2, align="center")
+
 
         pg.display.flip()
 
@@ -278,8 +288,10 @@ class Game:
             if event.type == pg.QUIT:
                 self.quit()
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    self.quit()
+                if event.key == pg.K_ESCAPE or event.key == pg.K_p:
+                    self.pause = not self.pause
+                if self.pause and event.key == pg.K_DELETE:
+                	self.quit()
 
 
 
@@ -382,4 +394,5 @@ while True:
     g.run()
     g.show_go_screen()
     g.show_in_screen()
+    
  

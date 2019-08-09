@@ -59,6 +59,7 @@ class Player(pg.sprite.Sprite):
         self.mana = MANA
         self.mana_regen = MANA_REGEN
         self.spirit = SPIRIT
+        self.spirit_regen = SPIRIT_REGEN
         self.lvlxp = LVL_XP
         self.xp = 0
         self.lvl = 1
@@ -102,17 +103,33 @@ class Player(pg.sprite.Sprite):
             self.vel.y = self.vel.y / 2**(1/2)
             self.vel.x = self.vel.x / 2**(1/2)
 
-        if self.lvl > 3:
-            if keys[pg.K_r]:
-                now = pg.time.get_ticks()
-                if now - self.last_shot > 1000:
-                    self.last_shot = now
-                    if self.health < self.vida:
-                        if self.spirit - SPIRIT_CUSTO  >= 0:
-                            self.spirit -= SPIRIT_CUSTO
-                            self.health += self.vida * 0.1
-                            if self.health > self.vida:
-                                self.health = self.vida
+        #teste lvl
+        if keys[pg.K_l] and keys[pg.K_2]:
+            self.lvl = 2
+
+        if keys[pg.K_l] and keys[pg.K_3]:
+            self.lvl = 3
+
+        if keys[pg.K_l] and keys[pg.K_4]:
+            self.lvl = 4 
+
+        if keys[pg.K_l] and keys[pg.K_5]:
+            self.lvl = 5 
+
+        if keys[pg.K_l] and keys[pg.K_6]:
+            self.lvl = 6
+
+        if keys[pg.K_l] and keys[pg.K_7]:
+            self.lvl = 7
+
+        if keys[pg.K_l] and keys[pg.K_0]:
+            self.lvl = 99
+
+        if keys[pg.K_g]:
+            self.health = self.vida
+
+        #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
         if pg.mouse.get_pressed() == (1, 0, 0):
             now = pg.time.get_ticks()
@@ -139,6 +156,18 @@ class Player(pg.sprite.Sprite):
                         Magia_Ent(self.game, self.pos, dir)
                         self.mana -= MANA_CUSTO_
 
+        if self.lvl > 3:
+            if keys[pg.K_r]:
+                now = pg.time.get_ticks()
+                if now - self.last_shot > 500:
+                    self.last_shot = now
+                    if self.health < self.vida:
+                        if self.spirit - SPIRIT_CUSTO  >= 0:
+                            self.spirit -= SPIRIT_CUSTO
+                            self.health += self.vida * 0.1
+                            if self.health > self.vida:
+                                self.health = self.vida
+
         if self.lvl > 4:
             if keys[pg.K_SPACE]:
                 now = pg.time.get_ticks()
@@ -164,63 +193,31 @@ class Player(pg.sprite.Sprite):
         if self.spirit > SPIRIT:
             self.spirit = SPIRIT
 
-        if self.lvl == 2:
-            self.mana_regen = 0.8
-            self.vida = 600
-            self.lvlxp = 200
 
-        if self.lvl == 3:
-            self.mana_regen = 1.2
-            self.vida = 800
-            self.lvlxp = 400
+
+        self.mana_regen = 0.8 / (self.lvl ** (-0.5))
+        self.vida = 400 + self.lvl * 200
+        self.lvlxp = 2 ** self.lvl * 50
 
         if self.lvl == 4:
-            self.mana_regen = 1.5
-            self.vida = 1000
-            self.lvlxp = 800
-
-        if self.lvl == 5:
-            self.mana_regen = 1.7
-            self.vida = 1300
-            self.lvlxp = 1500
-
-        if self.lvl == 6:
-            self.mana_regen = 2
-            self.vida = 1500
-            self.lvlxp = 3000
-
-
+            self.spirit_regen = 0.02
 
         if self.mana + self.mana_regen <= MANA:
             self.mana += self.mana_regen
             if self.mana > MANA - 2:
                 self.mana = MANA
 
+        if self.lvl > 3:
+            if self.spirit + self.spirit_regen <= SPIRIT:
+                self.spirit += self.spirit_regen
+                if self.spirit > SPIRIT - 2:
+                    self.spirit = SPIRIT                
 
-        if self.xp >= 100 and self.lvl == 1:
-            self.lvl = 2
+
+        if self.xp >= self.lvlxp:
+            self.lvl += 1 
             self.xp = 0
-      
-
-        if self.xp >= 200 and self.lvl == 2:
-            self.lvl = 3
-            self.xp = 0
-    
-
-        if self.xp >= 400 and self.lvl == 3:
-            self.lvl = 4
-            self.xp = 0
-
-
-        if self.xp >= 800 and self.lvl == 4:
-            self.lvl = 5
-            self.xp = 0
-
-
-        if self.xp >= 1500 and self.lvl == 5:
-            self.lvl = 6
-            self.xp = 0
-
+            
 
 
     def animate(self):
@@ -309,6 +306,7 @@ class Monstro(pg.sprite.Sprite):
         target_dist = self.game.player.pos - self.pos
         if target_dist.length_squared() < DETECT_RADIUS**2:
             self.animate()
+            self.draw_health()
             self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
             self.rect.center = self.pos
             self.acc = vec(1, 0).rotate(-self.rot)
@@ -334,9 +332,12 @@ class Monstro(pg.sprite.Sprite):
         else:
             col = DARKRED
 
+
+        #width_ = float(self.rect.width * self.health / MONSTRO_HEALTH)
         self.health_bar = pg.Rect(0, 0, MONSTRO_HIT_BOX[2], 5)
-        #if self.health < MONSTRO_HEALTH:
-        pg.draw.rect(self.image, col, self.health_bar)
+
+        if self.health < MONSTRO_HEALTH:
+            pg.draw.rect(self.image, col, self.health_bar)
 
     def animate(self):
         now = pg.time.get_ticks()
@@ -452,8 +453,8 @@ class Monstro_F(pg.sprite.Sprite):
             col = DARKRED
 
         self.health_bar = pg.Rect(0, 0, MONSTRO_F_HIT_BOX[2], 5)
-        #if self.health < MONSTRO_HEALTH:
-        pg.draw.rect(self.image, col, self.health_bar)
+        if self.health < MONSTRO_HEALTH:
+            pg.draw.rect(self.image, col, self.health_bar)
 
     def animate(self):
         now = pg.time.get_ticks()
@@ -579,8 +580,8 @@ class Monstro_A(pg.sprite.Sprite):
             col = DARKRED
 
         self.health_bar = pg.Rect(0, 0, MONSTRO_A_HIT_BOX[2], 5)
-        #if self.health < MONSTRO_HEALTH:
-        pg.draw.rect(self.image, col, self.health_bar)
+        if self.health < MONSTRO_HEALTH:
+            pg.draw.rect(self.image, col, self.health_bar)
 
     def animate(self):
         now = pg.time.get_ticks()
@@ -669,14 +670,14 @@ class Boss(pg.sprite.Sprite):
 
     def update(self):
         target_dist = self.game.player.pos - self.pos
-        if target_dist.length_squared() < (DETECT_RADIUS - 100)**2:
+        if target_dist.length_squared() < (DETECT_RADIUS - 70)**2:
             self.animate()
             self.draw_health()
             self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
             self.rect.center = self.pos
             self.acc = vec(1, 0).rotate(-self.rot)
             self.avoid_mobs()
-            self.acc.scale_to_length(-BOSS_SPEED)
+            self.acc.scale_to_length(BOSS_SPEED)
             self.acc += self.vel * -1
             self.vel += self.acc * self.game.dt
             self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
@@ -697,6 +698,7 @@ class Boss(pg.sprite.Sprite):
             self.game.player.xp += BOSS_XP
             self.kill()
             self.game.show_fi_screen()
+            pg.time.wait(3000)
 
 
     def draw_health(self):
@@ -708,8 +710,8 @@ class Boss(pg.sprite.Sprite):
             col = DARKRED
 
         self.health_bar = pg.Rect(0, 0, BOSS_HIT_BOX[2], 5)
-        #if self.health < MONSTRO_HEALTH:
-        pg.draw.rect(self.image, col, self.health_bar)
+        if self.health < BOSS_HEALTH:
+            pg.draw.rect(self.image, col, self.health_bar)
 
     def animate(self):
         now = pg.time.get_ticks()
@@ -867,5 +869,5 @@ class Magia_B(pg.sprite.Sprite):
         self.rect.center = self.pos
         if pg.sprite.spritecollideany(self, self.game.walls):
             self.kill()
-        if pg.time.get_ticks() - self.spawn_time > 2000:
+        if pg.time.get_ticks() - self.spawn_time > 1700:
             self.kill()
